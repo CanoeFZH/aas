@@ -18,12 +18,14 @@ import org.apache.spark.rdd.RDD
 
 object RunRecommender {
 
+  private val BASE = "hdfs:///user/ds/"
+
   def main(args: Array[String]): Unit = {
     val sc = new SparkContext(new SparkConf().setAppName("Recommender"))
-    val base = "hdfs:///user/ds/"
-    val rawUserArtistData = sc.textFile(base + "user_artist_data.txt")
-    val rawArtistData = sc.textFile(base + "artist_data.txt")
-    val rawArtistAlias = sc.textFile(base + "artist_alias.txt")
+
+    val rawUserArtistData = sc.textFile(BASE + "user_artist_data.txt")
+    val rawArtistData = sc.textFile(BASE + "artist_data.txt")
+    val rawArtistAlias = sc.textFile(BASE + "artist_alias.txt")
 
     preparation(rawUserArtistData, rawArtistData, rawArtistAlias)
     model(sc, rawUserArtistData, rawArtistData, rawArtistAlias)
@@ -223,6 +225,7 @@ object RunRecommender {
       }
 
     evaluations.sortBy(_._2).reverse.foreach(println)
+    sc.parallelize(evaluations.sortBy(_._2).reverse).saveAsTextFile(BASE + "AUCEvaluations")
 
     trainData.unpersist()
     cvData.unpersist()
